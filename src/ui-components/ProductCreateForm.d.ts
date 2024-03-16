@@ -5,9 +5,17 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
-import { StorageManagerProps } from "@aws-amplify/ui-react-storage";
-import { EscapeHatchProps } from "@aws-amplify/ui-react/internal";
+import { GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+export declare type EscapeHatchProps = {
+    [elementHierarchy: string]: Record<string, unknown>;
+} | null;
+export declare type VariantValues = {
+    [key: string]: string;
+};
+export declare type Variant = {
+    variantValues: VariantValues;
+    overrides: EscapeHatchProps;
+};
 export declare type ValidationResponse = {
     hasError: boolean;
     errorMessage?: string;
@@ -18,16 +26,12 @@ export declare type ProductCreateFormInputValues = {
     isSold?: boolean;
     price?: number;
     image?: string;
-    platformID?: string;
-    genreID?: string;
 };
 export declare type ProductCreateFormValidationValues = {
     name?: ValidationFunction<string>;
     isSold?: ValidationFunction<boolean>;
     price?: ValidationFunction<number>;
     image?: ValidationFunction<string>;
-    platformID?: ValidationFunction<string>;
-    genreID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type ProductCreateFormOverridesProps = {
@@ -35,9 +39,7 @@ export declare type ProductCreateFormOverridesProps = {
     name?: PrimitiveOverrideProps<TextFieldProps>;
     isSold?: PrimitiveOverrideProps<SwitchFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
-    image?: PrimitiveOverrideProps<StorageManagerProps>;
-    platformID?: PrimitiveOverrideProps<AutocompleteProps>;
-    genreID?: PrimitiveOverrideProps<AutocompleteProps>;
+    image?: PrimitiveOverrideProps<TextFieldProps>;
 } & EscapeHatchProps;
 export declare type ProductCreateFormProps = React.PropsWithChildren<{
     overrides?: ProductCreateFormOverridesProps | undefined | null;

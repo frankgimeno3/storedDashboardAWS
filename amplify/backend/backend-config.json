@@ -1,26 +1,12 @@
 {
   "api": {
-    "studiodashboard": {
-      "dependsOn": [
-        {
-          "attributes": [
-            "UserPoolId"
-          ],
-          "category": "auth",
-          "resourceName": "studiodashboard"
-        }
-      ],
+    "Sharoku": {
+      "dependsOn": [],
       "output": {
         "authConfig": {
           "additionalAuthenticationProviders": [
             {
               "authenticationType": "AWS_IAM"
-            },
-            {
-              "authenticationType": "AMAZON_COGNITO_USER_POOLS",
-              "userPoolConfig": {
-                "userPoolId": "authstudiodashboard"
-              }
             }
           ],
           "defaultAuthentication": {
@@ -37,7 +23,7 @@
     }
   },
   "auth": {
-    "studiodashboard": {
+    "Sharoku": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
@@ -68,7 +54,7 @@
     }
   },
   "storage": {
-    "s3studiodashboardstorage6411928f": {
+    "s3sharokustorage2aa34eac": {
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "S3"

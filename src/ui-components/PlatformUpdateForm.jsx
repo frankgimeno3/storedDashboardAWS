@@ -19,11 +19,10 @@ import {
   TextField,
   useTheme,
 } from "@aws-amplify/ui-react";
-import { getOverrideProps } from "@aws-amplify/ui-react/internal";
-import { fetchByPath, validateField } from "./utils";
+import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { getPlatform, listProducts } from "../graphql/queries";
-import { updatePlatform, updateProduct } from "../graphql/mutations";
+import { updatePlatform } from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -194,46 +193,44 @@ export default function PlatformUpdateForm(props) {
   const initialValues = {
     name: "",
     value: "",
-    Products: [],
+    Products: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
   const [value, setValue] = React.useState(initialValues.value);
   const [Products, setProducts] = React.useState(initialValues.Products);
   const [ProductsLoading, setProductsLoading] = React.useState(false);
-  const [ProductsRecords, setProductsRecords] = React.useState([]);
+  const [productsRecords, setProductsRecords] = React.useState([]);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = platformRecord
-      ? { ...initialValues, ...platformRecord, Products: linkedProducts }
+      ? { ...initialValues, ...platformRecord, Products }
       : initialValues;
     setName(cleanValues.name);
     setValue(cleanValues.value);
-    setProducts(cleanValues.Products ?? []);
+    setProducts(cleanValues.Products);
     setCurrentProductsValue(undefined);
     setCurrentProductsDisplayValue("");
     setErrors({});
   };
   const [platformRecord, setPlatformRecord] = React.useState(platformModelProp);
-  const [linkedProducts, setLinkedProducts] = React.useState([]);
-  const canUnlinkProducts = true;
   React.useEffect(() => {
     const queryData = async () => {
       const record = idProp
         ? (
             await API.graphql({
-              query: getPlatform,
+              query: getPlatform.replaceAll("__typename", ""),
               variables: { id: idProp },
             })
           )?.data?.getPlatform
         : platformModelProp;
-      const linkedProducts = record?.Products?.items ?? [];
-      setLinkedProducts(linkedProducts);
+      const ProductsRecord = record ? await record.Products : undefined;
+      setProducts(ProductsRecord);
       setPlatformRecord(record);
     };
     queryData();
   }, [idProp, platformModelProp]);
-  React.useEffect(resetStateValues, [platformRecord, linkedProducts]);
+  React.useEffect(resetStateValues, [platformRecord, Products]);
   const [currentProductsDisplayValue, setCurrentProductsDisplayValue] =
     React.useState("");
   const [currentProductsValue, setCurrentProductsValue] =
@@ -288,7 +285,7 @@ export default function PlatformUpdateForm(props) {
       }
       const result = (
         await API.graphql({
-          query: listProducts,
+          query: listProducts.replaceAll("__typename", ""),
           variables,
         })
       )?.data?.listProducts?.items;
@@ -353,70 +350,20 @@ export default function PlatformUpdateForm(props) {
               modelFields[key] = null;
             }
           });
-          const promises = [];
-          const productsToLink = [];
-          const productsToUnLink = [];
-          const productsSet = new Set();
-          const linkedProductsSet = new Set();
-          Products.forEach((r) => productsSet.add(getIDValue.Products?.(r)));
-          linkedProducts.forEach((r) =>
-            linkedProductsSet.add(getIDValue.Products?.(r))
-          );
-          linkedProducts.forEach((r) => {
-            if (!productsSet.has(getIDValue.Products?.(r))) {
-              productsToUnLink.push(r);
-            }
-          });
-          Products.forEach((r) => {
-            if (!linkedProductsSet.has(getIDValue.Products?.(r))) {
-              productsToLink.push(r);
-            }
-          });
-          productsToUnLink.forEach((original) => {
-            if (!canUnlinkProducts) {
-              throw Error(
-                `Product ${original.id} cannot be unlinked from Platform because undefined is a required field.`
-              );
-            }
-            promises.push(
-              API.graphql({
-                query: updateProduct,
-                variables: {
-                  input: {
-                    id: original.id,
-                  },
-                },
-              })
-            );
-          });
-          productsToLink.forEach((original) => {
-            promises.push(
-              API.graphql({
-                query: updateProduct,
-                variables: {
-                  input: {
-                    id: original.id,
-                  },
-                },
-              })
-            );
-          });
           const modelFieldsToSave = {
             name: modelFields.name ?? null,
             value: modelFields.value ?? null,
+            platformProductsId: modelFields?.Products?.id ?? null,
           };
-          promises.push(
-            API.graphql({
-              query: updatePlatform,
-              variables: {
-                input: {
-                  id: platformRecord.id,
-                  ...modelFieldsToSave,
-                },
+          await API.graphql({
+            query: updatePlatform.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                id: platformRecord.id,
+                ...modelFieldsToSave,
               },
-            })
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -483,24 +430,25 @@ export default function PlatformUpdateForm(props) {
         {...getOverrideProps(overrides, "value")}
       ></TextField>
       <ArrayField
+        lengthLimit={1}
         onChange={async (items) => {
-          let values = items;
+          let value = items[0];
           if (onChange) {
             const modelFields = {
               name,
               value,
-              Products: values,
+              Products: value,
             };
             const result = onChange(modelFields);
-            values = result?.Products ?? values;
+            value = result?.Products ?? value;
           }
-          setProducts(values);
+          setProducts(value);
           setCurrentProductsValue(undefined);
           setCurrentProductsDisplayValue("");
         }}
         currentFieldValue={currentProductsValue}
         label={"Products"}
-        items={Products}
+        items={Products ? [Products] : []}
         hasError={errors?.Products?.hasError}
         runValidationTasks={async () =>
           await runValidationTasks("Products", currentProductsValue)
@@ -522,14 +470,16 @@ export default function PlatformUpdateForm(props) {
           isReadOnly={false}
           placeholder="Search Product"
           value={currentProductsDisplayValue}
-          options={ProductsRecords.map((r) => ({
-            id: getIDValue.Products?.(r),
-            label: getDisplayValue.Products?.(r),
-          }))}
+          options={productsRecords
+            .filter((r) => !ProductsIdSet.has(getIDValue.Products?.(r)))
+            .map((r) => ({
+              id: getIDValue.Products?.(r),
+              label: getDisplayValue.Products?.(r),
+            }))}
           isLoading={ProductsLoading}
           onSelect={({ id, label }) => {
             setCurrentProductsValue(
-              ProductsRecords.find((r) =>
+              productsRecords.find((r) =>
                 Object.entries(JSON.parse(id)).every(
                   ([key, value]) => r[key] === value
                 )
@@ -541,6 +491,7 @@ export default function PlatformUpdateForm(props) {
           onClear={() => {
             setCurrentProductsDisplayValue("");
           }}
+          defaultValue={Products}
           onChange={(e) => {
             let { value } = e.target;
             fetchProductsRecords(value);

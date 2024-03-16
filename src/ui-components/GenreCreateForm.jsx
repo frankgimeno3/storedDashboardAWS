@@ -19,11 +19,10 @@ import {
   TextField,
   useTheme,
 } from "@aws-amplify/ui-react";
-import { getOverrideProps } from "@aws-amplify/ui-react/internal";
-import { fetchByPath, validateField } from "./utils";
+import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { listProducts } from "../graphql/queries";
-import { createGenre, updateProduct } from "../graphql/mutations";
+import { createGenre } from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -193,13 +192,13 @@ export default function GenreCreateForm(props) {
   const initialValues = {
     name: "",
     value: "",
-    Products: [],
+    Products: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
   const [value, setValue] = React.useState(initialValues.value);
   const [Products, setProducts] = React.useState(initialValues.Products);
   const [ProductsLoading, setProductsLoading] = React.useState(false);
-  const [ProductsRecords, setProductsRecords] = React.useState([]);
+  const [productsRecords, setProductsRecords] = React.useState([]);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
@@ -264,7 +263,7 @@ export default function GenreCreateForm(props) {
       }
       const result = (
         await API.graphql({
-          query: listProducts,
+          query: listProducts.replaceAll("__typename", ""),
           variables,
         })
       )?.data?.listProducts?.items;
@@ -332,34 +331,16 @@ export default function GenreCreateForm(props) {
           const modelFieldsToSave = {
             name: modelFields.name,
             value: modelFields.value,
+            genreProductsId: modelFields?.Products?.id,
           };
-          const genre = (
-            await API.graphql({
-              query: createGenre,
-              variables: {
-                input: {
-                  ...modelFieldsToSave,
-                },
+          await API.graphql({
+            query: createGenre.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                ...modelFieldsToSave,
               },
-            })
-          )?.data?.createGenre;
-          const promises = [];
-          promises.push(
-            ...Products.reduce((promises, original) => {
-              promises.push(
-                API.graphql({
-                  query: updateProduct,
-                  variables: {
-                    input: {
-                      id: original.id,
-                    },
-                  },
-                })
-              );
-              return promises;
-            }, [])
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -429,24 +410,25 @@ export default function GenreCreateForm(props) {
         {...getOverrideProps(overrides, "value")}
       ></TextField>
       <ArrayField
+        lengthLimit={1}
         onChange={async (items) => {
-          let values = items;
+          let value = items[0];
           if (onChange) {
             const modelFields = {
               name,
               value,
-              Products: values,
+              Products: value,
             };
             const result = onChange(modelFields);
-            values = result?.Products ?? values;
+            value = result?.Products ?? value;
           }
-          setProducts(values);
+          setProducts(value);
           setCurrentProductsValue(undefined);
           setCurrentProductsDisplayValue("");
         }}
         currentFieldValue={currentProductsValue}
         label={"Products"}
-        items={Products}
+        items={Products ? [Products] : []}
         hasError={errors?.Products?.hasError}
         runValidationTasks={async () =>
           await runValidationTasks("Products", currentProductsValue)
@@ -468,14 +450,16 @@ export default function GenreCreateForm(props) {
           isReadOnly={false}
           placeholder="Search Product"
           value={currentProductsDisplayValue}
-          options={ProductsRecords.map((r) => ({
-            id: getIDValue.Products?.(r),
-            label: getDisplayValue.Products?.(r),
-          }))}
+          options={productsRecords
+            .filter((r) => !ProductsIdSet.has(getIDValue.Products?.(r)))
+            .map((r) => ({
+              id: getIDValue.Products?.(r),
+              label: getDisplayValue.Products?.(r),
+            }))}
           isLoading={ProductsLoading}
           onSelect={({ id, label }) => {
             setCurrentProductsValue(
-              ProductsRecords.find((r) =>
+              productsRecords.find((r) =>
                 Object.entries(JSON.parse(id)).every(
                   ([key, value]) => r[key] === value
                 )

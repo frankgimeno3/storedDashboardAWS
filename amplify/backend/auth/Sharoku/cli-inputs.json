@@ -3,8 +3,8 @@
   "cognitoConfig": {
     "identityPoolName": "testAuthIdentityPool",
     "allowUnauthenticatedIdentities": true,
-    "resourceNameTruncated": "studioe7cf9f1a",
-    "userPoolName": "studiodashboard",
+    "resourceNameTruncated": "sharok7c760dd0",
+    "userPoolName": "Sharoku",
     "autoVerifiedAttributes": [
       "email"
     ],
@@ -30,10 +30,10 @@
     "userpoolClientRefreshTokenValidity": 30,
     "userpoolClientWriteAttributes": [],
     "userpoolClientReadAttributes": [],
-    "userpoolClientLambdaRole": "studioe7cf9f1a_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "Sharok7c760dd0_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "e7cf9f1a",
-    "resourceName": "studiodashboard",
+    "sharedId": "7c760dd0",
+    "resourceName": "Sharoku",
     "authSelections": "identityPoolAndUserPool",
     "serviceName": "Cognito",
     "usernameAttributes": [

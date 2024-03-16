@@ -1,7 +1,7 @@
 {
-  "resourceName": "s3studiodashboardstorage6411928f",
-  "bucketName": "studiodashboard-storage-6411928f",
-  "policyUUID": "747180f9",
+  "resourceName": "s3sharokustorage2aa34eac",
+  "bucketName": "sharoku-storage-2aa34eac",
+  "policyUUID": "38f7ce4e",
   "storageAccess": "authAndGuest",
   "guestAccess": [
     "READ"

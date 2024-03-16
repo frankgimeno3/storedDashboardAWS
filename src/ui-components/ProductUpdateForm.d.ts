@@ -5,9 +5,18 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
-import { EscapeHatchProps } from "@aws-amplify/ui-react/internal";
-import { Genre, Platform, Product } from "../API.ts";
+import { GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { Product } from "../API.ts";
+export declare type EscapeHatchProps = {
+    [elementHierarchy: string]: Record<string, unknown>;
+} | null;
+export declare type VariantValues = {
+    [key: string]: string;
+};
+export declare type Variant = {
+    variantValues: VariantValues;
+    overrides: EscapeHatchProps;
+};
 export declare type ValidationResponse = {
     hasError: boolean;
     errorMessage?: string;
@@ -18,16 +27,12 @@ export declare type ProductUpdateFormInputValues = {
     isSold?: boolean;
     price?: number;
     image?: string;
-    Genre?: Genre;
-    Platform?: Platform;
 };
 export declare type ProductUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     isSold?: ValidationFunction<boolean>;
     price?: ValidationFunction<number>;
     image?: ValidationFunction<string>;
-    Genre?: ValidationFunction<Genre>;
-    Platform?: ValidationFunction<Platform>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type ProductUpdateFormOverridesProps = {
@@ -36,8 +41,6 @@ export declare type ProductUpdateFormOverridesProps = {
     isSold?: PrimitiveOverrideProps<SwitchFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
     image?: PrimitiveOverrideProps<TextFieldProps>;
-    Genre?: PrimitiveOverrideProps<AutocompleteProps>;
-    Platform?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type ProductUpdateFormProps = React.PropsWithChildren<{
     overrides?: ProductUpdateFormOverridesProps | undefined | null;

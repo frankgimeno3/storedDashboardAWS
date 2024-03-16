@@ -1,0 +1,21 @@
+type Platform @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  value: String
+  Products: Product @hasOne
+}
+
+type Genre @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  value: String
+  Products: Product @hasOne
+}
+
+type Product @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  isSold: Boolean
+  price: Float
+  image: String
+}

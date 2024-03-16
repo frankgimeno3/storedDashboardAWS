@@ -1,4 +1,25 @@
 {
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-sharoku-staging-123026-authRole",
+      "UnauthRoleArn": "arn:aws:iam::815658686339:role/amplify-sharoku-staging-123026-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::815658686339:role/amplify-sharoku-staging-123026-authRole",
+      "Region": "eu-west-3",
+      "DeploymentBucketName": "amplify-sharoku-staging-123026-deployment",
+      "UnauthRoleName": "amplify-sharoku-staging-123026-unauthRole",
+      "StackName": "amplify-sharoku-staging-123026",
+      "StackId": "arn:aws:cloudformation:eu-west-3:815658686339:stack/amplify-sharoku-staging-123026/f79fe0f0-e390-11ee-aac2-0a8288c04477",
+      "AmplifyAppId": "d2m9qg2kh9xpm9"
+    },
+    "categories": {
+      "auth": {
+        "Sharoku": {}
+      },
+      "storage": {
+        "s3sharokustorage2aa34eac": {}
+      }
+    }
+  },
   "dev": {
     "awscloudformation": {
       "AuthRoleName": "amplify-studiodashboard-dev-133642-authRole",
