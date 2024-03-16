@@ -22,7 +22,7 @@ import {
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { getPlatform, listProducts } from "../graphql/queries";
-import { updatePlatform } from "../graphql/mutations";
+import { updatePlatform, updateProduct } from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -350,20 +350,66 @@ export default function PlatformUpdateForm(props) {
               modelFields[key] = null;
             }
           });
+          const promises = [];
+          const productToUnlink = await platformRecord.Products;
+          if (productToUnlink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: productToUnlink.id,
+                    productPlatformId: null,
+                  },
+                },
+              })
+            );
+          }
+          const productToLink = modelFields.Products;
+          if (productToLink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: Products.id,
+                    productPlatformId: platformRecord.id,
+                  },
+                },
+              })
+            );
+            const platformToUnlink = await productToLink.Platform;
+            if (platformToUnlink) {
+              promises.push(
+                API.graphql({
+                  query: updatePlatform.replaceAll("__typename", ""),
+                  variables: {
+                    input: {
+                      id: platformToUnlink.id,
+                      platformProductsId: null,
+                    },
+                  },
+                })
+              );
+            }
+          }
           const modelFieldsToSave = {
             name: modelFields.name ?? null,
             value: modelFields.value ?? null,
             platformProductsId: modelFields?.Products?.id ?? null,
           };
-          await API.graphql({
-            query: updatePlatform.replaceAll("__typename", ""),
-            variables: {
-              input: {
-                id: platformRecord.id,
-                ...modelFieldsToSave,
+          promises.push(
+            API.graphql({
+              query: updatePlatform.replaceAll("__typename", ""),
+              variables: {
+                input: {
+                  id: platformRecord.id,
+                  ...modelFieldsToSave,
+                },
               },
-            },
-          });
+            })
+          );
+          await Promise.all(promises);
           if (onSuccess) {
             onSuccess(modelFields);
           }

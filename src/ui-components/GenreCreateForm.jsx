@@ -22,7 +22,7 @@ import {
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { listProducts } from "../graphql/queries";
-import { createGenre } from "../graphql/mutations";
+import { createGenre, updateGenre, updateProduct } from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -333,14 +333,46 @@ export default function GenreCreateForm(props) {
             value: modelFields.value,
             genreProductsId: modelFields?.Products?.id,
           };
-          await API.graphql({
-            query: createGenre.replaceAll("__typename", ""),
-            variables: {
-              input: {
-                ...modelFieldsToSave,
+          const genre = (
+            await API.graphql({
+              query: createGenre.replaceAll("__typename", ""),
+              variables: {
+                input: {
+                  ...modelFieldsToSave,
+                },
               },
-            },
-          });
+            })
+          )?.data?.createGenre;
+          const promises = [];
+          const productToLink = modelFields.Products;
+          if (productToLink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: Products.id,
+                    productGenreId: genre.id,
+                  },
+                },
+              })
+            );
+            const genreToUnlink = await productToLink.Genre;
+            if (genreToUnlink) {
+              promises.push(
+                API.graphql({
+                  query: updateGenre.replaceAll("__typename", ""),
+                  variables: {
+                    input: {
+                      id: genreToUnlink.id,
+                      genreProductsId: null,
+                    },
+                  },
+                })
+              );
+            }
+          }
+          await Promise.all(promises);
           if (onSuccess) {
             onSuccess(modelFields);
           }

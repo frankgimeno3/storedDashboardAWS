@@ -22,7 +22,11 @@ import {
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { listProducts } from "../graphql/queries";
-import { createPlatform } from "../graphql/mutations";
+import {
+  createPlatform,
+  updatePlatform,
+  updateProduct,
+} from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -333,14 +337,46 @@ export default function PlatformCreateForm(props) {
             value: modelFields.value,
             platformProductsId: modelFields?.Products?.id,
           };
-          await API.graphql({
-            query: createPlatform.replaceAll("__typename", ""),
-            variables: {
-              input: {
-                ...modelFieldsToSave,
+          const platform = (
+            await API.graphql({
+              query: createPlatform.replaceAll("__typename", ""),
+              variables: {
+                input: {
+                  ...modelFieldsToSave,
+                },
               },
-            },
-          });
+            })
+          )?.data?.createPlatform;
+          const promises = [];
+          const productToLink = modelFields.Products;
+          if (productToLink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: Products.id,
+                    productPlatformId: platform.id,
+                  },
+                },
+              })
+            );
+            const platformToUnlink = await productToLink.Platform;
+            if (platformToUnlink) {
+              promises.push(
+                API.graphql({
+                  query: updatePlatform.replaceAll("__typename", ""),
+                  variables: {
+                    input: {
+                      id: platformToUnlink.id,
+                      platformProductsId: null,
+                    },
+                  },
+                })
+              );
+            }
+          }
+          await Promise.all(promises);
           if (onSuccess) {
             onSuccess(modelFields);
           }

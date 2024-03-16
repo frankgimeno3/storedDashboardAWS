@@ -5,7 +5,8 @@
  **************************************************************************/
 
 import * as React from "react";
-import { GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { Genre, Platform } from "../API.ts";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -26,12 +27,16 @@ export declare type ProductCreateFormInputValues = {
     isSold?: boolean;
     price?: number;
     image?: string;
+    Platform?: Platform;
+    Genre?: Genre;
 };
 export declare type ProductCreateFormValidationValues = {
     name?: ValidationFunction<string>;
     isSold?: ValidationFunction<boolean>;
     price?: ValidationFunction<number>;
     image?: ValidationFunction<string>;
+    Platform?: ValidationFunction<Platform>;
+    Genre?: ValidationFunction<Genre>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type ProductCreateFormOverridesProps = {
@@ -40,6 +45,8 @@ export declare type ProductCreateFormOverridesProps = {
     isSold?: PrimitiveOverrideProps<SwitchFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
     image?: PrimitiveOverrideProps<TextFieldProps>;
+    Platform?: PrimitiveOverrideProps<AutocompleteProps>;
+    Genre?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type ProductCreateFormProps = React.PropsWithChildren<{
     overrides?: ProductCreateFormOverridesProps | undefined | null;

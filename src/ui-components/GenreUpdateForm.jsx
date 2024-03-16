@@ -22,7 +22,7 @@ import {
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { API } from "aws-amplify";
 import { getGenre, listProducts } from "../graphql/queries";
-import { updateGenre } from "../graphql/mutations";
+import { updateGenre, updateProduct } from "../graphql/mutations";
 function ArrayField({
   items = [],
   onChange,
@@ -350,20 +350,66 @@ export default function GenreUpdateForm(props) {
               modelFields[key] = null;
             }
           });
+          const promises = [];
+          const productToUnlink = await genreRecord.Products;
+          if (productToUnlink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: productToUnlink.id,
+                    productGenreId: null,
+                  },
+                },
+              })
+            );
+          }
+          const productToLink = modelFields.Products;
+          if (productToLink) {
+            promises.push(
+              API.graphql({
+                query: updateProduct.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: Products.id,
+                    productGenreId: genreRecord.id,
+                  },
+                },
+              })
+            );
+            const genreToUnlink = await productToLink.Genre;
+            if (genreToUnlink) {
+              promises.push(
+                API.graphql({
+                  query: updateGenre.replaceAll("__typename", ""),
+                  variables: {
+                    input: {
+                      id: genreToUnlink.id,
+                      genreProductsId: null,
+                    },
+                  },
+                })
+              );
+            }
+          }
           const modelFieldsToSave = {
             name: modelFields.name ?? null,
             value: modelFields.value ?? null,
             genreProductsId: modelFields?.Products?.id ?? null,
           };
-          await API.graphql({
-            query: updateGenre.replaceAll("__typename", ""),
-            variables: {
-              input: {
-                id: genreRecord.id,
-                ...modelFieldsToSave,
+          promises.push(
+            API.graphql({
+              query: updateGenre.replaceAll("__typename", ""),
+              variables: {
+                input: {
+                  id: genreRecord.id,
+                  ...modelFieldsToSave,
+                },
               },
-            },
-          });
+            })
+          );
+          await Promise.all(promises);
           if (onSuccess) {
             onSuccess(modelFields);
           }
